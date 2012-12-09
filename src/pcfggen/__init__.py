@@ -1,6 +1,8 @@
 import nltk.grammar, nltk.tag
 import uuid
 
+from randsent import *
+
 
 
 def generate_pcfg(tagged_sents):
