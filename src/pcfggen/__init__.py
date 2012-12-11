@@ -57,7 +57,7 @@ def add_sub_nonterminal(grammar, n_gram, freq):
     '''Replaces an n-gram in a grammar with a new non-terminal'''
     n_gram = list(n_gram)
     prods = []
-    nt = nltk.grammar.Nonterminal('sub_{0}_{1}'.format('_'.join("({0})".format(nt.symbol()) for nt in n_gram), grammar.new_symbol_count))
+    nt = nltk.grammar.Nonterminal('sub_%s_%s' % ('_'.join("(%s)" % nt.symbol() for nt in n_gram), grammar.new_symbol_count))
     grammar.new_symbol_count += 1
     for prod in grammar.productions():
         rhs = list(prod.rhs())
@@ -105,7 +105,7 @@ def add_join_nonterminal(grammar, diff_index, base_prod):
             prods.append(prod)
         else:
             new_prods.append(prod)
-    nt = nltk.grammar.Nonterminal('join_{0}_{1}'.format('_'.join("({0})".format(prod.rhs()[diff_index]) for prod in prods), grammar.new_symbol_count))
+    nt = nltk.grammar.Nonterminal('join_%s_%s' % ('_'.join("(%s)" % prod.rhs()[diff_index] for prod in prods), grammar.new_symbol_count))
     grammar.new_symbol_count += 1
     total_freq = sum(prod.freq for prod in prods)
     new_rhs = list(base_prod.rhs())
