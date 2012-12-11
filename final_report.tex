@@ -1,0 +1,171 @@
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[paper=a4, fontsize=11pt]{scrartcl} % A4 paper and 11pt font size
+
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\usepackage{fourier} % Use the Adobe Utopia font for the document - comment this line to return to the LaTeX default
+\usepackage[english]{babel} % English language/hyphenation
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+
+\usepackage{sectsty} % Allows customizing section commands
+\allsectionsfont{\centering \normalfont\scshape} % Make all sections centered, the default font and small caps
+
+\usepackage{enumerate} % Allows customizing enumeration blocks
+
+\usepackage{fancyhdr} % Custom headers and footers
+\pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
+\fancyhead{} % No page header - if you want one, create it in the same way as the footers below
+\fancyfoot[L]{} % Empty left footer
+\fancyfoot[C]{} % Empty center footer
+\fancyfoot[R]{\thepage} % Page numbering for right footer
+\renewcommand{\headrulewidth}{0pt} % Remove header underlines
+\renewcommand{\footrulewidth}{0pt} % Remove footer underlines
+\setlength{\headheight}{13.6pt} % Customize the height of the header
+
+\numberwithin{equation}{section} % Number equations within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command with 1 argument of height
+
+\title{	
+\normalfont \normalsize 
+\textsc{MIT, 6.863 Natural Language Processing and Computer Representation of Knowledge}
+\horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
+\huge Automatic PCFG generator \\ % The assignment title
+\horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
+}
+
+\author {Todd Layton, Anastasia Uryasheva}
+
+\date{\normalsize\today} 
+
+\begin{document}
+
+\maketitle % 
+
+%----------------------------------------------------------------------------------------
+%	Part 1
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+Here will be an introduction
+
+%----------------------------------------------------------------------------------------
+%	Part 2
+%----------------------------------------------------------------------------------------
+
+\section{Background}
+
+Here will be an article description
+
+%----------------------------------------------------------------------------------------
+%	Part 3
+%----------------------------------------------------------------------------------------
+
+\section{Implementation}
+
+The \texttt{pcfggen} module generates a PCFG through an iterative process of production rule creation and modification, which transforms an initial trivial grammar into a more generalized one.
+
+\subsection{Initial Grammar}
+
+The program uses the input training corpus to create a simple grammar as a starting point for the rule modification. For each POS-tagged sentence in the training corpus, a corresponding production rule is added to the grammar. The left-hand side of this rule is \texttt{ROOT}, the right-hand side is the sequence of POS tags constituting that sentence, and the probability is $1$ over the total size, in sentences, of the corpus.
+
+\subsection{Iteration}
+
+Once the initial grammar is created, the program repeatedly looks for modifications to make in order to produce a grammar which is not so closely fitted to the training corpus. Generation of the PCFG is complete once there are no remaining modifications to be made. These modifications consist of two types of grammar transformations: 2-gram expansion and rule joining.
+
+\subsubsection{2-gram Expansion}
+
+The program finds the most frequently-occurring symbol 2-gram in the training corpus which is not already the right-hand side of a production rule in the grammar. A new nonterminal symbol is created, and each instance of that 2-gram is replaced with that nonterminal. An additional production rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the 2-gram, and the probability is $1$. This step does not change the functional structure of the grammar, but rather decomposed it into a larger number of simpler rules in order to enable rule joining.
+
+\subsubsection{Rule Joining}
+
+Before each 2-gram expansion step, the program checks whether any multiple production rules in the corpus, with more than one symbol in the right-hand side, consists of the exact same right-hand side except for the symbols at one particular index (for example, the third symbol in each rule's right-hand side). If such rules are found, then a new nonterminal symbol is created, and the symbol at that index in each rule's right-hand side is replaced with that nonterminal. Then, for each of those rules, a new rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the symbol which that nonterminal replaced in that rule, and the probability is the relative frequency of the right-hand side symbol. Unlike 2-gram expansion, rule joining actually changes the functional structure of the grammar, allowing for symbol sequence which did not previously fit.
+
+\subsubsection{Example}
+
+The effects of these two types of grammar modification are best illustrated with a simple example. Consider a toy corpus of three sentences, corresponding to three POS tag sequences:
+
+\begin{enumerate}[(a)]
+\item \texttt{A C B C}
+\item \texttt{X A C}
+\item \texttt{Y B C}
+\end{enumerate}
+
+Given this corpus as the training input, the program would perform the following steps:
+\begin{enumerate}[1.]
+\item Create the initial grammar:
+\begin{enumerate}[(a)]
+\item \texttt{ROOT \textrightarrow A C B C [1/3]}
+\item \texttt{ROOT \textrightarrow X A C [1/3]}
+\item \texttt{ROOT \textrightarrow B C Y [1/3]}
+\end{enumerate}
+
+\item Check for rule joining, but no production rules are sufficiently similar.
+
+\item Expand the 2-gram \texttt{A C}:
+\begin{enumerate}[(a)]
+\item \texttt{ROOT \textrightarrow exp(A)(C)-0 B C [1/3]}
+\item \texttt{ROOT \textrightarrow X exp(A)(C)-0 [1/3]}
+\item \texttt{ROOT \textrightarrow B C Y [1/3]}
+\item \texttt{exp(A)(C)-0 \textrightarrow A C  [1]}
+\end{enumerate}
+
+\item Check for rule joining, but no production rules are sufficiently similar.
+
+\item Expand the 2-gram \texttt{B C}:
+\begin{enumerate}[(a)]
+\item \texttt{ROOT \textrightarrow exp(A)(C)-0 exp(B)(C)-1 [1/3]}
+\item \texttt{ROOT \textrightarrow X exp(A)(C)-0 [1/3]}
+\item \texttt{ROOT \textrightarrow exp(B)(C)-0 Y [1/3]}
+\item \texttt{exp(A)(C) \textrightarrow A C  [1]}
+\item \texttt{exp(B)(C) \textrightarrow B C  [1]}
+\end{enumerate}
+
+\item Join \texttt{A C} and \texttt{B C}:
+\begin{enumerate}[(a)]
+\item \texttt{ROOT \textrightarrow exp(A)(C) exp(B)(C)-1 [1/3]}
+\item \texttt{ROOT \textrightarrow X exp(A)(C)-0 [1/3]}
+\item \texttt{ROOT \textrightarrow exp(B)(C)-1 Y [1/3]}
+\item \texttt{exp(A)(C)-0 \textrightarrow join(A)(B)-2 C  [1]}
+\item \texttt{exp(B)(C)-1 \textrightarrow join(A)(B)-2 C  [1]}
+\item \texttt{join(A)(B)-2 \textrightarrow A  [1/2]}
+\item \texttt{join(A)(B)-2 \textrightarrow B  [1/2]}
+\end{enumerate}
+
+\item Check for rule joining, but no production rules are sufficiently similar.
+
+\item Check for 2-gram expansion, but no unexpanded 2-grams remain.
+
+\item Return the grammar.
+
+\end{enumerate}
+
+%----------------------------------------------------------------------------------------
+%	Part 4
+%----------------------------------------------------------------------------------------
+
+\section{Results}
+
+Here will be a table with results and results' description
+
+%----------------------------------------------------------------------------------------
+%	Part 5
+%----------------------------------------------------------------------------------------
+\section{Conclusion}
+
+Here will be a conclusion
+
+\end{document}
+
