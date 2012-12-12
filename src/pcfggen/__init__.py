@@ -27,7 +27,7 @@ def generate_exhaustive_grammar(tagged_sents, start = 'ROOT'):
     prods = []
     start = nltk.grammar.Nonterminal(start)
     for tagged_sent in tagged_sents:
-        prod = nltk.grammar.WeightedProduction(start, [nltk.grammar.Nonterminal(tag) for token, tag in tagged_sent], prob = 1.0 / len(tagged_sents))
+        prod = nltk.grammar.WeightedProduction(start, [tag for token, tag in tagged_sent], prob = 1.0 / len(tagged_sents))
         prod.freq = prod.prob()
         prods.append(prod)
     grammar = nltk.grammar.WeightedGrammar(start, prods)
@@ -57,7 +57,7 @@ def add_sub_nonterminal(grammar, n_gram, freq):
     '''Replaces an n-gram in a grammar with a new non-terminal'''
     n_gram = list(n_gram)
     prods = []
-    nt = nltk.grammar.Nonterminal('sub_%s_%s' % ('_'.join("(%s)" % nt.symbol() for nt in n_gram), grammar.new_symbol_count))
+    nt = nltk.grammar.Nonterminal('sub_%s_%s' % ('_'.join("(%s)" % symbol for symbol in n_gram), grammar.new_symbol_count))
     grammar.new_symbol_count += 1
     for prod in grammar.productions():
         rhs = list(prod.rhs())
