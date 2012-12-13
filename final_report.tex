@@ -69,7 +69,83 @@ Here will be an introduction
 
 \section{Background}
 
-Here will be an article description
+The theoretical background of the project is based on the article "Automatic learning of context-free grammar" written by T.Chen, C.Tseng, C.Chen. The article tells about the problem of learning context-free grammar from a corpus. The solution for the problem is investigated based on the notion of minimum description length of the corpus. 
+Basic problem is to find a set of rules, which will derive original sentences in the best way. Article tells about the way of creating CFG from corpus of sentences and suggests a cost function as a measure of the quality of resulting CFG. With the help of cost function, goal is rewritten as: to find a set of rules that can derive original language with the minimum cost.
+
+\subsection{Cost function}
+
+Cost function depends on the CFG description of the corpus. There are two types of cost functions:
+
+\begin{enumerate}[1.]
+\item Rules for giving words their POS-tags.
+
+For rules consisting of a non-terminal symbol on the left-hand side and a string of symbols on the right-hand side the cost of a rule is the number of bits needed to represent the left-hand side and right-hand side. For example, if we have the rule:
+\begin{equation}\label{first}
+A  -> \beta
+\end{equation}
+then the cost function for this rule will be:
+\begin{equation}\label{first}
+C_R = (1+\lvert\beta\rvert)log(\lvert\Sigma\rvert)
+\end{equation}
+where \begin{math} \Sigma \end{math}  is the symbol set and \begin{math} \lvert\Sigma\rvert \end{math} is the number of symbols in \begin{math} \Sigma \end{math} .
+\item Rules for deriving sentences.
+
+To derive sentence W we need a sequence of rules: \begin{math} S \Rightarrow \alpha_1 \Rightarrow ... \Rightarrow W \end{math}. This sequence of rules always starts with one of S-derivation rules: \begin{math} S \Rightarrow \alpha \end{math}. This step results in a derived string \begin{math} \alpha \end{math}. If there is no non-terminal symbols in \begin{math} \alpha \end{math} , we are done with the derivation. Otherwise, we expand the left-most non-terminal symbol, say X, in \begin{math} \alpha \end{math} by one of its derivation bodies. The process continues until there is no non-terminal symbols in the derived string, which will be the sentence W at that point.
+So if we have a set of rules: R1(S) : S → … , … , R1(X) : X → … , … and a sentence for derivation W then the cost for rules to derive W will be:
+\begin{equation}\label{first}
+C_D = \sum \limits_{k=1}^m log(\lvert R(s_k)\rvert)
+\end{equation}
+where m is the number of rules in the derivation sequence, \begin{math} s_k \end{math} is the non-terminal symbol for the kth derivation and \begin{math} \lvert R(s_k)\rvert \end{math} is the number of rules in the CFG using \begin{math} s_k \end{math} as the left-hand side.
+\end{enumerate}
+
+Combining (2.2) and (2.3), the total cost is
+\begin{equation}\label{first}
+C = \sum \limits_{i=1}^p C_R(i) + \sum\limits_{j=1}^q C_D(j) = \sum \limits_{i=1}^p n_i log(\lvert \Sigma \rvert) + \sum\limits_{j=1}^q \sum\limits_{k=1}^{m_j} log(\lvert R(s_k) \rvert)
+\end{equation}
+
+\subsection{Special Cases}
+Additionally, the article investigates two special cases:
+\begin{enumerate}[1.]
+\item Exhaustive CFG
+
+Exhaustive CFG is a CFG that uses every distinct sentence in the corpus as a direct derivation body of the start symbol S. The number of symbols for a rule is simply the number of words of the corresponding sentense \begin{math} n_w \end{math}, plus 1 (for the start symbol S), and \begin{math} \lvert \Sigma \rvert \end{math} is the vocabulary size \begin{math} \lvert V \rvert \end{math} of the corpus plus 1 (for the start symbol). The rule cost is:
+\begin{equation}\label{first}
+C_R = n log(\lvert \Sigma \rvert) = (n_w + 1)log(\lvert V \rvert + 1)
+\end{equation}
+In this case, each sentence is derived from S in one step, by specifying the correct one out of the \begin{math} \lvert R(S) \rvert \end{math} rules. Thus the derivation cost for a sentence is:
+\begin{equation}\label{first}
+C_D = log \lvert R(S) \rvert
+\end{equation}
+ Total cost for that case is:
+
+\begin{equation}\label{first}
+C = \sum \limits_{i=1}^{\lvert R(S) \rvert} C_R(i) + \sum \limits_{j=1}^q C_D(j) = \sum \limits_{i=1}^{\lvert R(S) \rvert} (n_w(i) + 1) log(\lvert V \rvert + 1) + q log \lvert R(S) \rvert
+\end{equation}
+
+\item Recursive CFG
+
+Recursive CFG is a CFG that uses recursive derivation for S: S → AS where the non-terminal A can be expanded to be any word in the vocabulary.
+The rule cost in this case is:
+
+\begin{equation}\label{first}
+C_R = n log \lvert \Sigma \rvert
+\end{equation}
+where n can be 1, 2 or 3 depending on rule
+The derivation cost in this case is:
+
+\begin{equation}\label{first}
+C_D = n_w(1 + log \lvert V \rvert) + 1
+\end{equation}
+
+Total cost in this case:
+
+\begin{equation}\label{first}
+C = \sum \limits_{i=1}^{2+\lvert V \rvert}n_i log \lvert \Sigma \rvert + \sum \limits_{j=1}^q C_D(j) = (4 + 2\lvert V \rvert)log(\lvert V \rvert + 2) + \sum \limits_{j=1}^q (n_w(j)(1 + log \lvert V \rvert) + 1)
+\end{equation}
+
+\end{enumerate}
+
+The exhaustive CFG is too restricted in the sense that it covers only those sentences seen in the learning corpus. The recursive CFG is too broad in the sense that it covers all sentences including the non-sense ones. The goal is to strike a balance between these two extremes.
 
 %----------------------------------------------------------------------------------------
 %	Part 3
