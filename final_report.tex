@@ -162,6 +162,8 @@ The resulting generated PCFG is able to parse not only the training sentences, b
 
 This implementation of a PCFG generation program could be improves significantly in several ways. At the moment, all valid 2-gram expansions and rule joinings which exists in the training corpus are executed, and the generation process only terminates once all such modifications have been completed. Allowing for the possibility of valid but statistically-negligible modification would improve the system's behavior on large training sets. Similarly, it is very possible for a generated grammar to include groups of production rules which could be simplified down to an equivalent form with fewer rules (as can be seen in the above example). This would limit the growth of the overall size of the generated PCFG's rule set, and might even create additional valid rule joinings of which the generation program could make use.
 
+Another major improvement would be the incorporation of word probabilities into the training data. If the generation program could be run on raw sentences rather than on POS-tag sequences, and could account for the relative probabilities of each POS mapping to each word, then the generated grammar would be able to parse raw sentences directly, which would improve the accuracy of its results and massively increase its ability to generate natural-sounding random sentences.
+
 %----------------------------------------------------------------------------------------
 %	Part 4
 %----------------------------------------------------------------------------------------
