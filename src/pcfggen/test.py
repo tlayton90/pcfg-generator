@@ -11,7 +11,7 @@ from nltk.treetransforms import *
 #used for golden standart pcfg
 def learn_treebank(files=None, markov_order=None):
     #default is reading from treebank.parsed_sents() - 10% of penn Tree bank
-    if files is None: bank = treebank.parsed_sents()[:10]
+    if files is None: bank = treebank.parsed_sents()[:2]
     else: bank = treebank.parsed_sents(files)
     return learn_trees_gs(bank, collapse=True, markov_order=markov_order)
 
@@ -62,14 +62,68 @@ for i in treebank.tagged_sents()[:2]:
 averageProb = 0
 amountOfSents = 0
 
-grammar_gs = learn_treebank(None, None)
+i = learn_treebank(None)
+prod = i.productions()
+prodsEmp = []
+prods=[]
+for k in prod:
+    #print k.prob()
+    if not str(k.rhs()[0]).isupper():
+        product = nltk.grammar.WeightedProduction(k.lhs(), ["", ""], prob = k.prob())
+        if product not in prodsEmp:
+            prodsEmp.append(product)
+    else: prods.append(k)
+
+def rules_for_one_nonterm(nonTerm, prods):
+    term = str(nonTerm)
+    itog_prod = []
+    for j in prods:
+        if len(j.rhs())==2:
+            if str(j.rhs()[0]) == term or str(j.rhs()[1])==term:
+                if str(j.rhs()[0]) == term and str(j.rhs()[1])==term:
+                    product = nltk.grammar.WeightedProduction(j.lhs(), [term, term], prob = j.prob())
+                    itog_prod.append(product)
+                elif str(j.rhs()[0]) == term:
+                    product = nltk.grammar.WeightedProduction(j.lhs(), [term, j.rhs()[1]], prob = j.prob())
+                    itog_prod.append(product)
+                else:
+                    product = nltk.grammar.WeightedProduction(j.lhs(), [j.rhs()[0], term], prob = j.prob())
+                    itog_prod.append(product)
+            else:
+                itog_prod.append(j)
+        else:
+            if str(j.rhs()[0]) == term:
+                    product = nltk.grammar.WeightedProduction(j.lhs(), [term, ], prob = j.prob())
+                    itog_prod.append(product)
+            else:
+                itog_prod.append(j)
+            
+    return itog_prod
+
+first_elem = prodsEmp.pop(0)
+first_step_prod = rules_for_one_nonterm(first_elem.lhs(), prods)
+
+result =  []
+
+def recurs_CFG(prev_prod, prE):
+    next_it = prE.pop(0)
+    if len(prE)>0:
+        next_prod = rules_for_one_nonterm(next_it.lhs(), prev_prod)
+        recurs_CFG(next_prod, prE)
+    else:
+        result[:] = rules_for_one_nonterm(next_it.lhs(), prev_prod)[:]
+    #return result
+
+
+recurs_CFG(first_step_prod, prodsEmp)
+
+grammar_gs = nltk.grammar.induce_pcfg(Nonterminal('S'), result)
 grammar_pred = learn_pcfg_res(None)
 
 for i in listStr:
-    probab_gs = parse_viterbi_with_pcfg(grammar_gs, i[1])
+    probab_gs = parse_viterbi_with_pcfg(grammar_gs, i[0])
     probab_pred = parse_viterbi_with_pcfg(grammar_pred, i[0])
     difference = abs(float(probab_gs) - float(probab_pred))
-#    print difference
     amountOfSents+=1
     averageProb+=difference
 
