@@ -16,6 +16,8 @@
 
 \usepackage{enumerate} % Allows customizing enumeration blocks
 
+\usepackage{qtree} % Render parse trees
+
 \usepackage{fancyhdr} % Custom headers and footers
 \pagestyle{fancyplain} % Makes all pages in the document conform to the custom headers and footers
 \fancyhead{} % No page header - if you want one, create it in the same way as the footers below
@@ -41,7 +43,7 @@
 \normalfont \normalsize 
 \textsc{MIT, 6.863 Natural Language Processing and Computer Representation of Knowledge}
 \horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
-\huge Automatic PCFG generator \\ % The assignment title
+\huge Automatic PCFG Generator \\ % The assignment title
 \horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
 }
 
@@ -87,11 +89,11 @@ Once the initial grammar is created, the program repeatedly looks for modificati
 
 \subsubsection{2-gram Expansion}
 
-The program finds the most frequently-occurring symbol 2-gram in the training corpus which is not already the right-hand side of a production rule in the grammar. A new nonterminal symbol is created, and each instance of that 2-gram is replaced with that nonterminal. An additional production rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the 2-gram, and the probability is $1$. This step does not change the functional structure of the grammar, but rather decomposed it into a larger number of simpler rules in order to enable rule joining.
+The program finds the most frequently-occurring symbol 2-gram in the training corpus which is not already the right-hand side of a production rule in the grammar. A new nonterminal symbol is created, specified as an expansion of that 2-gram's symbols and with a unique numeric identifier, and each instance of that 2-gram is replaced with that nonterminal. An additional production rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the 2-gram, and the probability is $1$. This step does not change the functional structure of the grammar, but rather decomposed it into a larger number of simpler rules in order to enable rule joining.
 
 \subsubsection{Rule Joining}
 
-Before each 2-gram expansion step, the program checks whether any multiple production rules in the corpus, with more than one symbol in the right-hand side, consists of the exact same right-hand side except for the symbols at one particular index (for example, the third symbol in each rule's right-hand side). If such rules are found, then a new nonterminal symbol is created, and the symbol at that index in each rule's right-hand side is replaced with that nonterminal. Then, for each of those rules, a new rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the symbol which that nonterminal replaced in that rule, and the probability is the relative frequency of the right-hand side symbol. Unlike 2-gram expansion, rule joining actually changes the functional structure of the grammar, allowing for symbol sequence which did not previously fit.
+Before each 2-gram expansion step, the program checks whether any multiple production rules in the corpus, with more than one symbol in the right-hand side, consists of the exact same right-hand side except for the symbols at one particular index (for example, the third symbol in each rule's right-hand side). If such rules are found, then a new nonterminal symbol is created, specified as a rule joining of the symbols being replaced and with a unique numeric identifier, and the symbol at that index in each rule's right-hand side is replaced with that nonterminal. Then, for each of those rules, a new rule is added to the grammar, of which the left-hand side is the new nonterminal, the right-hand side is the symbol which that nonterminal replaced in that rule, and the probability is the relative frequency of the right-hand side symbol. Unlike 2-gram expansion, rule joining actually changes the functional structure of the grammar, allowing for symbol sequence which did not previously fit.
 
 \subsubsection{Example}
 
@@ -135,7 +137,7 @@ Given this corpus as the training input, the program would perform the following
 
 \item Join \texttt{A C} and \texttt{B C}:
 \begin{enumerate}[(a)]
-\item \texttt{ROOT \textrightarrow exp(A)(C) exp(B)(C)-1 [1/3]}
+\item \texttt{ROOT \textrightarrow exp(A)(C)-0 exp(B)(C)-1 [1/3]}
 \item \texttt{ROOT \textrightarrow X exp(A)(C)-0 [1/3]}
 \item \texttt{ROOT \textrightarrow exp(B)(C)-1 Y [1/3]}
 \item \texttt{exp(A)(C)-0 \textrightarrow join(A)(B)-2 C  [1]}
@@ -151,6 +153,14 @@ Given this corpus as the training input, the program would perform the following
 \item Return the grammar.
 
 \end{enumerate}
+
+The resulting generated PCFG is able to parse not only the training sentences, but also other sentences of a similar structure. For example, the sentence \texttt{X B C} would be parsed as follows:
+
+\Tree [.ROOT X [.exp(A)(C)-0 [.join(A)(B)-2 B ] C ]]
+
+\subsection{Potential Improvements}
+
+This implementation of a PCFG generation program could be improves significantly in several ways. At the moment, all valid 2-gram expansions and rule joinings which exists in the training corpus are executed, and the generation process only terminates once all such modifications have been completed. Allowing for the possibility of valid but statistically-negligible modification would improve the system's behavior on large training sets. Similarly, it is very possible for a generated grammar to include groups of production rules which could be simplified down to an equivalent form with fewer rules (as can be seen in the above example). This would limit the growth of the overall size of the generated PCFG's rule set, and might even create additional valid rule joinings of which the generation program could make use.
 
 %----------------------------------------------------------------------------------------
 %	Part 4
