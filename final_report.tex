@@ -63,8 +63,10 @@
 %----------------------------------------------------------------------------------------
 
 \section{Introduction}
+This project is dedicated to the process of deriving PCFG rules from corpus of sentences. Although there are some different articles that are dedicated to the process of deriving grammar rules from large corpora very few of them are about PCFG. Mostly that works are about CFG rules. The difference between CFG and PCFG is a parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} for each rule \begin{math} \alpha\rightarrow \beta \in R \end{math}. The parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} can be interpreted as the conditional probabilty of choosing rule \begin{math} \alpha \rightarrow \beta \end{math} in a left-most derivation, given that the non-terminal being expanded is \begin{math} \alpha \end{math}. For any \begin{math} X \in N \end{math}, we have the constraint \begin{math} \sum_{\alpha\rightarrow\beta\in R:\alpha=X} q(\alpha\rightarrow\beta) = 1 \end{math}. In addition we have \begin{math} q(\alpha\rightarrow\beta) \geqslant 0 \end{math} for any \begin{math} \alpha \rightarrow \beta \in R \end{math}. 
+That's why probably there are much less articles about deriving PCFG than about deriving CFG. Those who'd like to derive CFG from corpus has a precise goal: to minimize amount of rules in grammar. In contrast with CFG, PCFG has no precise measure of quality - the less is not better here. Moreover, the maximization of probability for each rule is not a good measure too since it's rather simple to create a dummy grammar with 1.0 probability for each rule. 
+Some algorithms for deriving PCFG were prorposed. Some of them rely on different heuristics to iteratively construct an approximation of the unknown CFG, like [1]; others search for a PCFG that has the largest posterior given the training corpus, like [2]. Article [3] describes algorithm which use iterative biclustering. All of them have different restrictions or limitations. Often articles for the automatic PCFG generation uses some additional tool for creating PCFG like [4] that uses LFG approximations, or [5] that uses head-driven structure grammars, or [6] that describes simply representation of linguistics trees in the form of PCFG. There are more articles about creating CFGs using different ways, as for example [7] or [8]. As a theoretical backgorund for our research we took article [9] about deriving CFG and made some significant changes.
 
-Here will be an introduction
 
 %----------------------------------------------------------------------------------------
 %	Part 2
@@ -82,18 +84,19 @@ The cost function measures the `effectiveness' of the generated CFG's descriptio
 \begin{enumerate}[1.]
 \item Rules for giving words their POS tags
 
-For rules consisting of a non-terminal symbol on the left-hand side and a string of symbols on the right-hand side, the cost of a rule is the number of bits needed to represent the left-hand side and right-hand side. For example, if we have the rule:
+For rules consisting of a non-terminal symbol on the left-hand side and a string of symbols on the right-hand side the cost of a rule is the number of bits needed to represent the left-hand side and right-hand side. For example, if we have the rule:
 \begin{equation}\label{first}
-A  \rightarrow \beta
+A  -> \beta
 \end{equation}
 then the cost function for this rule will be:
 \begin{equation}\label{first}
-C_R = (1+\lvert\beta\rvert) \log(\lvert\Sigma\rvert)
+C_R = (1+\lvert\beta\rvert)log(\lvert\Sigma\rvert)
 \end{equation}
 where \begin{math} \Sigma \end{math}  is the symbol set and \begin{math} \lvert\Sigma\rvert \end{math} is the number of symbols in \begin{math} \Sigma \end{math} .
 \item Rules for deriving sentences.
 
-To derive sentence $W$ we need a sequence of rules: \begin{math} \texttt{ROOT} \Rightarrow \alpha_1 \Rightarrow ... \Rightarrow \texttt{W} \end{math}. This sequence of rules always starts with one of \texttt{ROOT}-derivation rules: \texttt{ROOT \textrightarrow $\alpha$}. This step results in a derived string \begin{math} \alpha \end{math}. If there is no non-terminal symbols in \begin{math} \alpha \end{math} , we are done with the derivation. Otherwise, we expand the left-most non-terminal symbol, say $X$, in \begin{math} \alpha \end{math} by one of its derivation bodies. Each rule in the sequence must be chosen out from the set consisting of all rules in the grammar with the same left-hand side as that rule. The process continues until there is no non-terminal symbols in the derived string, which will be the sentence $W$ at that point. Thus the cost for rules to derive $W$ will be:
+To derive sentence W we need a sequence of rules: \begin{math} ROOT \Rightarrow \alpha_1 \Rightarrow ... \Rightarrow W \end{math}. This sequence of rules always starts with one of S-derivation rules: \begin{math} S \Rightarrow \alpha \end{math}. This step results in a derived string \begin{math} \alpha \end{math}. If there is no non-terminal symbols in \begin{math} \alpha \end{math} , we are done with the derivation. Otherwise, we expand the left-most non-terminal symbol, say X, in \begin{math} \alpha \end{math} by one of its derivation bodies. The process continues until there is no non-terminal symbols in the derived string, which will be the sentence W at that point.
+So if we have a set of rules: R1(ROOT) : $ROOT \rightarrow ... , ... , R1(X) : X \rightarrow ... , ...$ and a sentence for derivation W then the cost for rules to derive W will be:
 \begin{equation}\label{first}
 C_D = \sum \limits_{k=1}^m \log(\lvert R(s_k)\rvert)
 \end{equation}
@@ -114,19 +117,19 @@ An exhaustive CFG is one that uses every distinct sentence in the corpus as a di
 \begin{equation}\label{first}
 C_R = n \log(\lvert \Sigma \rvert) = (n_w + 1) \log(\lvert V \rvert + 1)
 \end{equation}
-In this case, each sentence is derived from ROOT in one step, by specifying the correct one out of the \begin{math} \lvert R(\texttt{ROOT}) \rvert \end{math} rules. Thus the derivation cost for a sentence is:
+In this case, each sentence is derived from ROOT in one step, by specifying the correct one out of the \begin{math} \lvert R(ROOT) \rvert \end{math} rules. Thus the derivation cost for a sentence is:
 \begin{equation}\label{first}
-C_D = \log \lvert R(\texttt{ROOT}) \rvert
+C_D = \log \lvert R(ROOT) \rvert
 \end{equation}
  Total cost for that case is:
 
 \begin{equation}\label{first}
-C = \sum \limits_{i=1}^{\lvert R(\texttt{ROOT}) \rvert} C_R(i) + \sum \limits_{j=1}^q C_D(j) = \sum \limits_{i=1}^{\lvert R(\texttt{ROOT}) \rvert} (n_w(i) + 1) log(\lvert V \rvert + 1) + q \log \lvert R(\texttt{ROOT}) \rvert
+C = \sum \limits_{i=1}^{\lvert R(ROOT) \rvert} C_R(i) + \sum \limits_{j=1}^q C_D(j) = \sum \limits_{i=1}^{\lvert R(ROOT) \rvert} (n_w(i) + 1) log(\lvert V \rvert + 1) + q log \lvert R(ROOT) \rvert
 \end{equation}
 
 \item Recursive CFG
 
-A recursive CFG is one that uses recursive derivation for \texttt{ROOT}: \texttt{ROOT \textrightarrow A ROOT}, where the non-terminal \texttt{A} can be expanded to be any terminal in the vocabulary.
+A recursive CFG is one that uses recursive derivation for \texttt{ROOT}; \texttt{ROOT \textrightarrow A ROOT} where the non-terminal \texttt{A} can be expanded to be any terminal in the vocabulary.
 The rule cost in this case is:
 
 \begin{equation}\label{first}
@@ -142,7 +145,7 @@ C_D = n_w(1 + \log \lvert V \rvert) + 1
 Total cost in this case:
 
 \begin{equation}\label{first}
-C = \sum \limits_{i=1}^{2+\lvert V \rvert}n_i \log \lvert \Sigma \rvert + \sum \limits_{j=1}^q C_D(j) = (4 + 2\lvert V \rvert) \log(\lvert V \rvert + 2) + \sum \limits_{j=1}^q (n_w(j)(1 + \log \lvert V \rvert) + 1)
+C = \sum \limits_{i=1}^{2+\lvert V \rvert}n_i log \lvert \Sigma \rvert + \sum \limits_{j=1}^q C_D(j) = (4 + 2\lvert V \rvert)log(\lvert V \rvert + 2) + \sum \limits_{j=1}^q (n_w(j)(1 + log \lvert V \rvert) + 1)
 \end{equation}
 
 \end{enumerate}
@@ -342,6 +345,22 @@ Another major improvement would be the incorporation of word and sentences proba
 \section{Conclusion}
 
 We have implemented a program to automatically generate a probabilistic context free grammar from a corpus of POS-tagged training sentences. Though this implementation is severely limited by runtime constraints, it demonstrates the conceptual soundness this iterative approach. In particular, the fact that the language defined by the generated grammar contains sentences beyond those found in the training corpus shows how, in theory, an automated program could, using only a sample set of a natural language and a vocabulary dictionary, learn the grammatical structure of that language in its entirety. While this experimental \texttt{pcfggen} module is far from a universal language interpreter, the underlying principles are those necessary to develop a true artificial language learning system.
+
+%----------------------------------------------------------------------------------------
+%	Part 7
+%----------------------------------------------------------------------------------------
+\section{References}
+\begin{enumerate}[1. ]
+\item Adriaans, P., Trautwein, M., Vervoort, M.: Towards high speed grammar induction on large text corpora.
+\item Chen, S.F.: Bayesian grammar induction for language modeling.
+\item Tu K., Honavar V.: Unsupervised Learning of Probabilistic Context-Free Grammar using Iterative Biclustering.
+\item Cahill A., Josef van Genabith: Robust PCFG-Based Generation using Automatically Acquired LFG Approximations.
+\item Zhang Y., Krieger H.U. :Large-Scale Corpus-Driven PCFG Approximation of an HPSG.
+\item Johnson M. :PCFG Models of Linguistic Tree Representations.
+\item Avinash J. Agrawal, Dr. O. G. Kakde, Shri Ramdeobaba, Katol Road: Corpus Based Context Free Grammar Design for Natural Language Interface to Database.
+\item Post M., GildeaBayesian D. :Learning of a Tree Substitution Grammar.
+\item T.Chen, C.Tseng, C.Chen: Automatic Learning of Context-Free Grammar.
+\end{enumerate}
 
 \end{document}
 
