@@ -11,7 +11,7 @@ from nltk.treetransforms import *
 #used for golden standart pcfg
 def learn_treebank(files=None, markov_order=None):
     #default is reading from treebank.parsed_sents() - 10% of penn Tree bank
-    if files is None: bank = treebank.parsed_sents()[:2]
+    if files is None: bank = treebank.parsed_sents()[10:200]
     else: bank = treebank.parsed_sents(files)
     return learn_trees_gs(bank, collapse=True, markov_order=markov_order)
 
@@ -31,7 +31,7 @@ def learn_trees_gs(trees, collapse=True, markov_order=None):
 #make our PCFG
 #takes a file with parsed trees taking them as an argument from command line
 def learn_pcfg_res(file_input=None):
-    if file_input is None: bank = treebank.tagged_sents()[:10]
+    if file_input is None: bank = treebank.tagged_sents()[:20]
     else: bank = treebank.tagged_sents(file_input)
     grammar = __init__.generate_pcfg(bank)
     return grammar
@@ -52,7 +52,7 @@ def parse_viterbi_with_pcfg (grammar, sentence):
 listStr = []
 stri = ""
 strj = ""
-for i in treebank.tagged_sents()[:2]:
+for i in treebank.tagged_sents()[:5]:
     for j in i:
         stri+=str(j[1])+" "
         strj+=str(j[0])+" "
