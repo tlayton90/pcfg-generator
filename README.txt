@@ -1,0 +1,1 @@
+To run the pcfggen module, you will need Python 2.5 or higher, and the NLTK package. You will most likely also want one or more NLTK corpora to use in conjunction with the generate_pcfg() function.

@@ -64,9 +64,9 @@
 
 \section{Introduction}
 
-This project is dedicated to the process of deriving PCFG rules from corpus of sentences. Although there are some different articles that are dedicated to the process of deriving grammar rules from large corpora very few of them are about PCFG. Mostly that works are about CFG rules. The difference between CFG and PCFG is a parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} for each rule \begin{math} \alpha\rightarrow \beta \in R \end{math}. The parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} can be interpreted as the conditional probabilty of choosing rule \begin{math} \alpha \rightarrow \beta \end{math} in a left-most derivation, given that the non-terminal being expanded is \begin{math} \alpha \end{math}. For any \begin{math} X \in N \end{math}, we have the constraint \begin{math} \sum_{\alpha\rightarrow\beta\in R:\alpha=X} q(\alpha\rightarrow\beta) = 1 \end{math}. In addition we have \begin{math} q(\alpha\rightarrow\beta) \geqslant 0 \end{math} for any \begin{math} \alpha \rightarrow \beta \in R \end{math}. 
-That's why probably there are much less articles about deriving PCFG than about deriving CFG. Those who'd like to derive CFG from corpus has a precise goal: to minimize amount of rules in grammar. In contrast with CFG, PCFG has no precise measure of quality - the less is not better here. Moreover, the maximization of probability for each rule is not a good measure too since it's rather simple to create a dummy grammar with 1.0 probability for each rule. 
-Some algorithms for deriving PCFG were prorposed. Some of them rely on different heuristics to iteratively construct an approximation of the unknown CFG, like [1]; others search for a PCFG that has the largest posterior given the training corpus, like [2]. Article [3] describes algorithm which use iterative biclustering. All of them have different restrictions or limitations. Often articles for the automatic PCFG generation uses some additional tool for creating PCFG like [4] that uses LFG approximations, or [5] that uses head-driven structure grammars, or [6] that describes simply representation of linguistics trees in the form of PCFG. There are more articles about creating CFGs using different ways, as for example [7] or [8]. As a theoretical backgorund for our research we took article [9] about deriving CFG and made some significant changes.
+This project is dedicated to the process of deriving PCFG rules from a corpus of sentences. Although there has been some academic study dedicated to the process of deriving grammar rules from large corpora, very few of them deal with the probabilistic aspects found in PCFGs, working instead with standard CFGs. The difference between a CFG and a PCFG is a parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} for each rule \begin{math} \alpha\rightarrow \beta \in R \end{math}. The parameter \begin{math} q(\alpha \rightarrow \beta) \end{math} can be interpreted as the conditional probability of choosing rule \begin{math} \alpha \rightarrow \beta \end{math} in a left-most derivation, given that the non-terminal being expanded is \begin{math} \alpha \end{math}. For any \begin{math} X \in N \end{math}, we have the constraint \begin{math} \sum_{\alpha\rightarrow\beta\in R:\alpha=X} q(\alpha\rightarrow\beta) = 1 \end{math}. In addition we have \begin{math} q(\alpha\rightarrow\beta) \geqslant 0 \end{math} for any \begin{math} \alpha \rightarrow \beta \in R \end{math}. 
+The process of deriving a CFG from a corpus has a precise goal: to minimize amount of rules in grammar. In contrast, PCFGs has no precise measure of quality - a smaller rule set, while generally desirable, is not strictly better in this case. Moreover, the maximization of probability for each rule, and thus of each derived sentence, is not a good measure either,  as it is trivial to create a dummy grammar with $1.0$ probability for each rule. This is probably in part the reason that academic investigation has tended to focus on  non-probabilistic CFGs.
+Despite this, some algorithms for deriving PCFG rules have been proposed. Some of them rely on different heuristics to iteratively construct an approximation of the unknown CFG, like [1]; others search for a PCFG that has the largest posterior given the training corpus, like [2]. Article [3] describes an algorithm which uses iterative biclustering. All of them have different restrictions or limitations. Often, methods for automatic PCFG generation use some additional tool for creating PCFG, like [4], which uses LFG approximations, [5], which uses head-driven structure grammars, or [6], which describes simple representation of linguistics trees in the form of PCFG. There are many more articles about creating CFGs using different ways, as for example [7] or [8]. As a theoretical background for our research we took article [9], about deriving CFGs, and made some significant changes.
 
 
 %----------------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ Before each 2-gram expansion step, the program checks whether any multiple produ
 
 \section{Implementation}
 
-The \texttt{pcfggen} module's primary access point is the \texttt{generate\_pcfg()} function.
+The \texttt{pcfggen} module's primary access point is the \texttt{generate\_pcfg()} function, which takes as its single argument a list of tagged sentences, each of which is in the form of a list of (word, POS tag) pairs, the same format as is provided by the \texttt{tagged\_sents()} method of any of NLTK's corpora. It returns an instance of NLTK's \texttt{WeightedGrammar} class, representing the generated PCFG.
 
 \subsection{Control Flow}
 
@@ -293,27 +293,27 @@ Similarly, the generated grammar is capable of randomly producing sentences whic
 
 \section{Results}
 
-To check the quality of generated PCFG we decided to parse every sentence by \texttt{viterbi parser} which is a part of \texttt{nltk.grammar} library. The algorithm was trained on two different grammars: on the PCFG which was generated by our program and on the golden standart grammar which was implemented with the help of standard nltk tools. As ain input viterbi algorithm takes one of the grammars and a set of sentences for parsing. As an output viterbi gives probability of the parsed sentence. As a measure of difference between two PCFGs we take the average difference of probabilities for all sentences in test corpus: \begin{math} average_difference = frac{\sum \limits_{i=1}^n \lvert probablitiyGS_i - probabilityPred_i \rvert}{n} \end{math}  where  \begin{math} probabillityGS_i \end{math} is a golden standard probability for i-th sentence and \begin{math} probabillityPred_i \end{math} is a probability which was counted based on grammar provided by our PCFG generator , n is amount of sentences in test corpora.
+To check the quality of the generated PCFG we decided to parse every sentence with a Viterbi parser, using the NLTK implementaion. Two parser were constructed: one from the PCFG which was generated by our program, and one from the golden standard grammar which was implemented with the help of standard NLTK tools. As an input, the Viterbi algorithm takes one of the grammars and a set of sentences for parsing. As an output it gives the most-like parse of that sentence, along with the probability of that parse. As a measure of difference between two PCFGs we take the average difference of probabilities for all sentences in test corpus: \begin{math} \text{average\_difference} = {1 \over n} \sum \limits_{i=1}^n \lvert \text{probabilityGS}_i - \text{probabilityPred}_i \rvert \end{math}, where \begin{math} \text{probabilityGS}_i \end{math} is a golden standard parse probability for the $i$th sentence, \begin{math} \text{probabilityPred}_i \end{math} is the probability of the parse given by a Viterbi parser based on the grammar provided by our PCFG generator, and $n$ is the number of sentences in the test corpus.
 
 \subsection{Restrictions}
 The verification algorithm has a couple of restrictions. 
 
-Firstly, due to big volume of processed data algorithm works for a rather long time. Then we probably has no possibility to train our PCFG generator on all senetnces which are provided by penntreebank.tagged-sents(). So we restricted training corpora and focused on examples where the training corpus for our generated PCFG and the test corpus are the same. Those results are not meaningless, since the PCFG generator introduces probabilistic splits which didn't necessarily exist in any one sentence of the training corpus, and this would guarantee that our generated PCFG could parse the whole test corpus. 
+First, for a large volume of training data, the generation program runs for a rather long time. Thus we were not able to train our PCFG generator on and entire corpus, such as is provided by \texttt{treebank.tagged\_sents()}. So we restricted the training corpus to a subset of those sentences, and focused on examples where the training corpus for our generated PCFG and the test corpus are the same. These results are still far from meaningless, since the PCFG generator introduces probabilistic splits which did not necessarily exist in any one sentence of the training corpus, while at the same time this approach would guarantee that our generated PCFG could at least parse the whole test corpus. 
 
-Secondly, due to the algorithm doesn't produce rules for giving POS tags to words we can't give as an input the sentence itself. Omitting the pre-terminal -> terminal rules (i.e. the POS tag -> word rules) makes the POS tags the new terminals, with no enforced pre-terminal set. So instead of sentence "Tom went home" for example we produce sentence "NNP VBD NN" as an input for viterbi parser.
+Secondly, as the algorithm does not produce rules for mapping POS tags to words, we cannot give as input the sentence itself. Omitting the pre-terminal to terminal rules (i.e. the POS tag to word rules) makes the POS tags the new terminals, with no enforced pre-terminal set. So instead of the sentence ``Tom went home',' for example, we use the corresponding POS-tag sequence "NNP VBD NN" as an input for Viterbi parser.
 For our generated PCFG, the program already does this by ignoring the words in the training corpus sentences and only using the pre-tagged POS tags. 
-For the gold standard grammar, since the treebank parse trees already include the words, we need to strip out those words by removing every "leaf" of the parse trees (every terminal symbol). It's done in two steps: after generating grammar from treebank.parsed-sents() we found all the rules which contains terminals in right-hand side and remove this rules. After doing this, we take the non-terminal which used to be in left-hand side of the removed rules and  then replace that nonterminal symbol in the right-hand sides of the remaining rules with an equivalent string-type symbol.
+For the gold standard grammar, since the treebank parse trees already include the words, we needed to strip out those words by removing every "leaf" of the parse trees (every terminal symbol). This was done in two steps: after generating grammar from \texttt{treebank.parsed\_sents()} we found all the rules which contains terminals in right-hand side and removed those rules. After doing this, we take the non-terminals which used to be in left-hand sides of the removed rules and replace each of those non-terminal symbols in the right-hand sides of the remaining rules with an equivalent string-type terminal symbol.
 
 \subsection{Result table}
 
-We've trained golden standard on 200 sentences from Penn treebank and tried to parse first 5 sentences. Then we changed amount of sentences in training corpus for our PCFG generator. The results that we have are:
+We trained the golden standard grammar on 200 sentences from the Penn Treebank and tried to parse the first 5 sentences. Then we changed amount of sentences in training corpus for our PCFG generator. The results that we have are:
 
 \begin{table}[ht]
 \caption{Probability Difference Results}
 \centering
 \begin{tabular}{c c}
 \hline\hline
-Amount of training sentences & Average probability difference \\ [0.5ex]
+Number of training sentences & Average probability difference \\ [0.5ex]
 %heading
 \hline
 10&2.29780078167e-09 \\
@@ -331,6 +331,8 @@ Amount of training sentences & Average probability difference \\ [0.5ex]
 \end{tabular}
 \label{table:nonlin}
 \end{table}
+
+These results are quite encouraging. Even if these numbers come in part from the restricted nature of our testing, as described above, and from the generally small order of Viterbi parse probabilities, the proximity of the two grammars' probabilities suggests that our generation program is at least able to produce a roughly accurate rule structure from the information provided.
 
 
 \subsection{Potential Improvements}
